@@ -1,29 +1,29 @@
 services:
   app:
-      build:
-        context: .
-        dockerfile: Dockerfile
-      container_name: fastapi_app
-      ports:
-        - "8000:8000"
-      env_file:
-        - .env
-      environment:
-        DATABASE_URL: postgresql+psycopg://appuser:apppass@db:5432/appdb
-      depends_on:
-        postgres:
-          condition: service_healthy
-      restart: unless-stopped
-      healthcheck:
-        test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-        interval: 30s
-        timeout: 5s
-        retries: 3
-      develop:
-        watch:
-          - action: sync
-            path: ./app
-            target: /app/app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastapi_app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://appuser:apppass@db:5432/appdb
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    develop:
+      watch:
+        - action: sync
+          path: ./app
+          target: /app/app
 
   postgres:
     image: postgres:17-alpine
@@ -42,6 +42,18 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  pgadmin:
+    image: dpage/pgadmin4:9.18
+    container_name: pgadmin_container
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+
 
 volumes:
   postgres_data:
