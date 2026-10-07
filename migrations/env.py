@@ -3,8 +3,22 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from app.actor.model import *
+from app.address.model import *
+from app.category.model import *
+from app.city.model import *
 from app.core.config import get_settings
 from app.core.database import Base
+from app.country.model import *
+from app.customer.model import *
+from app.film.model import *
+from app.film_actor.model import *
+from app.film_category.model import *
+from app.inventory.model import *
+from app.language.model import *
+from app.rental import *
+from app.staff.model import *
+from app.store.model import *
 
 config = context.config
 settings = get_settings()
