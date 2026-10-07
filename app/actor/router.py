@@ -34,6 +34,16 @@ def create_actor(db: Annotated[Session, Depends(get_db)], data: CreateActorSchem
     return ActorService.create(db, data)
 
 
+@router.get("/search", response_model=PaginatedResponseSchema[ActorResponseSchema])
+def search_actors(
+    db: Annotated[Session, Depends(get_db)],
+    q: Annotated[str, Query(..., min_length=1)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    size: Annotated[int, Query(ge=1, le=100)] = 10,
+):
+    return ActorService.search(db, page=page, size=size, q=q)
+
+
 @router.get("/{actor_id}", response_model=ActorResponseSchema)
 def get_actor_by_id(
     db: Annotated[Session, Depends(get_db)],
@@ -78,13 +88,3 @@ def delete_actor_by_id(
     actor = ActorService.delete(db, actor_id)
     if not actor:
         raise NotFoundException()
-
-
-@router.get("/search", response_model=PaginatedResponseSchema[ActorResponseSchema])
-def search_actors(
-    db: Annotated[Session, Depends(get_db)],
-    q: Annotated[str, Query(..., min_length=1)],
-    page: Annotated[int, Query(ge=1)] = 1,
-    size: Annotated[int, Query(ge=1, le=100)] = 10,
-):
-    return ActorService.search(db, page=page, size=size, q=q)
