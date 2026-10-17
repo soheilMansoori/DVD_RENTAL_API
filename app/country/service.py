@@ -1,21 +1,34 @@
 from math import ceil
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy.orm import Session
+
+from app.core.dependencies import Pagination, get_db
 
 from .model import Country
 from .schema import CreateCountrySchema
 
 
 class CountryService:
-    @staticmethod
-    def get_all(
-        db: Session,
-        page: int = 1,
-        size: int = 10,
-    ):
-        total = db.query(Country).count()
+    db: Session
+    model: type[Country] = Country
+
+    def __init__(self, db: Annotated[Session, Depends(get_db)]) -> None:
+        self.db = db
+
+    def get_all(self, pagination: Pagination):
+        page, size, q = (pagination.page, pagination.size, pagination.q)
+        db, model = self.db, self.model
+
+        query = db.query(model)
+
+        if not q is None:
+            query = query.filter(model.country.ilike(f"%{q}%"))
+
+        total = query.count()
         offset = (page - 1) * size
-        items = db.query(Country).limit(size).offset(offset).all()
+        items = query.limit(size).offset(offset).all()
 
         return {
             "items": items,
@@ -25,19 +38,22 @@ class CountryService:
             "total_pages": ceil(total / size) if size > 0 else 0,
         }
 
-    @staticmethod
-    def create(db: Session, data: CreateCountrySchema):
-        new_country = Country(**data.model_dump())
-        db.add(new_country)
-        db.commit()
-        db.refresh(new_country)
-        return new_country
+    def get_by_id(self, language_id: int):
+        return self.db.query(self.model).filter_by(id=language_id).one_or_none()
 
-    @staticmethod
-    def delete(db: Session, country_id: int):
-        country = db.query(Country).filter_by(id=country_id).one_or_none()
-        if country:
-            db.delete(country)
+    def create(self, data: CreateCountrySchema):
+        db, model = self.db, self.model
+        new_language = model(**data.model_dump())
+        db.add(new_language)
+        db.commit()
+        db.refresh(new_language)
+        return new_language
+
+    def delete(self, language_id: int):
+        db, model = self.db, self.model
+        language = db.query(model).filter_by(id=language_id).one_or_none()
+        if language:
+            db.delete(language)
             db.commit()
             return True
         return False
