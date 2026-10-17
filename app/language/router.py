@@ -1,9 +1,8 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, Path, status
 
-from app.core.dependencies import get_db
+from app.core.dependencies import Pagination
 from app.core.exceptions import NotFoundException
 
 from .schema import (
@@ -18,27 +17,38 @@ router = APIRouter(prefix="/languages", tags=["Languages"])
 
 @router.get("/", response_model=PaginatedResponseSchema[LanguageResponseSchema])
 def get_all_languages(
-    db: Annotated[Session, Depends(get_db)],
-    page: Annotated[int, Query(ge=1)] = 1,
-    size: Annotated[int, Query(ge=1, le=100)] = 10,
+    language_service: Annotated[LanguageService, Depends(LanguageService)],
+    pagination: Annotated[Pagination, Depends(Pagination)],
 ):
-    return LanguageService.get_all(db, page=page, size=size)
+    return language_service.get_all(pagination)
 
 
 @router.post(
     "/", status_code=status.HTTP_201_CREATED, response_model=LanguageResponseSchema
 )
 def create_language(
-    db: Annotated[Session, Depends(get_db)], data: CreateLanguageSchema
+    language_service: Annotated[LanguageService, Depends(LanguageService)],
+    data: CreateLanguageSchema,
 ):
-    return LanguageService.create(db, data)
+    return language_service.create(data)
+
+
+@router.get("/{language_id}", response_model=LanguageResponseSchema)
+def get_language_by_id(
+    language_service: Annotated[LanguageService, Depends(LanguageService)],
+    language_id: Annotated[int, Path(..., gt=0)],
+):
+    language = language_service.get_by_id(language_id)
+    if not language:
+        raise NotFoundException()
+    return language
 
 
 @router.delete("/{language_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_language_by_id(
-    db: Annotated[Session, Depends(get_db)],
+    language_service: Annotated[LanguageService, Depends(LanguageService)],
     language_id: Annotated[int, Path(..., gt=0)],
 ):
-    language = LanguageService.delete(db, language_id)
+    language = language_service.delete(language_id)
     if not language:
         raise NotFoundException()
