@@ -2,6 +2,7 @@ from fastapi_offline import FastAPIOffline
 
 from app.actor.router import router as actor_router
 from app.address.router import router as address_router
+from app.category.router import router as category_router
 from app.city.router import router as city_router
 from app.country.router import router as country_router
 from app.language.router import router as language_router
@@ -20,3 +21,4 @@ app.include_router(language_router)
 app.include_router(country_router)
 app.include_router(city_router)
 app.include_router(address_router)
+app.include_router(category_router)
