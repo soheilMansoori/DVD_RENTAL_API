@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import get_db
+from app.core.dependencies import Pagination, get_db
 
 from .model import FilmActor
 
@@ -15,8 +15,23 @@ class FilmActorService:
     def __init__(self, db: Annotated[Session, Depends(get_db)]) -> None:
         self.db = db
 
-    def get_actors_by_film(self, film_id: int):
-        return self.db.query(self.model).filter(self.model.film_id == film_id).all()
+    def get_actors_by_film(self, film_id: int, pagination: Pagination):
+        page, size = pagination.page, pagination.size
+        db, model = self.db, self.model
+
+        query = db.query(model).filter(model.film_id == film_id)
+
+        total = query.count()
+        offset = (page - 1) * size
+        items = query.order_by(model.actor_id).limit(size).offset(offset).all()
+
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "size": size,
+            "total_pages": ceil(total / size) if size > 0 else 0,
+        }
 
     def add_actor_to_film(self, film_id: int, actor_id: int):
         db, model = self.db, self.model
