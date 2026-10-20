@@ -14,7 +14,7 @@ from app.store.router import router as store_router
 app = FastAPIOffline()
 
 
-@app.get("/")
+@app.get("/", tags=["Welcome"])
 def root():
     return {"message": "welcome to FastAPI DVD_RENTAL_API app"}
 
