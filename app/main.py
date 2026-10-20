@@ -9,6 +9,7 @@ from app.film.router import router as film_router
 from app.film_actor.router import router as film_actor_router
 from app.film_category.router import router as film_category_router
 from app.language.router import router as language_router
+from app.store.router import router as store_router
 
 app = FastAPIOffline()
 
@@ -28,3 +29,4 @@ app.include_router(category_router)
 app.include_router(film_router)
 app.include_router(film_actor_router)
 app.include_router(film_category_router)
+app.include_router(store_router)
