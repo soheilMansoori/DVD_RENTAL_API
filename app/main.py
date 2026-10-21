@@ -5,6 +5,7 @@ from app.address.router import router as address_router
 from app.category.router import router as category_router
 from app.city.router import router as city_router
 from app.country.router import router as country_router
+from app.customer.router import router as customer_router
 from app.film.router import router as film_router
 from app.film_actor.router import router as film_actor_router
 from app.film_category.router import router as film_category_router
@@ -32,3 +33,4 @@ app.include_router(film_actor_router)
 app.include_router(film_category_router)
 app.include_router(store_router)
 app.include_router(staff_router)
+app.include_router(customer_router)
