@@ -27,11 +27,11 @@ services:
 
   postgres:
     image: postgres:17-alpine
-    container_name: fastapi_postgres_db
+    container_name: dvdrental_postgres_db
     environment:
-      POSTGRES_USER: appuser
-      POSTGRES_PASSWORD: apppass
-      POSTGRES_DB: appdb
+      POSTGRES_USER: pg_user
+      POSTGRES_PASSWORD: pg_password
+      POSTGRES_DB: dvdrental
     ports:
       - "5432:5432"
     volumes:
@@ -46,8 +46,8 @@ services:
     image: dpage/pgadmin4:9.18
     container_name: pgadmin_container
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: pg_admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: pg_admin_password
     ports:
       - "8080:80"
     depends_on:
