@@ -16,7 +16,7 @@ from app.film_actor.model import *
 from app.film_category.model import *
 from app.inventory.model import *
 from app.language.model import *
-from app.rental import *
+from app.rental.model import *
 from app.staff.model import *
 from app.store.model import *
 
