@@ -9,7 +9,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql+psycopg://appuser:apppass@db:5432/appdb
+      DATABASE_URL: postgresql://app_user:app_password@localhost:5432/dvdrental
     depends_on:
       postgres:
         condition: service_healthy
@@ -42,7 +42,6 @@ services:
       timeout: 5s
       retries: 10
 
-
   pgadmin:
     image: dpage/pgadmin4:9.18
     container_name: pgadmin_container
@@ -51,9 +50,12 @@ services:
       PGADMIN_DEFAULT_PASSWORD: pg_admin_password
     ports:
       - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
     depends_on:
       - postgres
 
 
 volumes:
   postgres_data:
+  pgadmin_data:
