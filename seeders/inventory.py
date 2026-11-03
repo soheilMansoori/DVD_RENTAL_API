@@ -17,7 +17,7 @@ def seed_inventories(db, faker):
 
         db.add_all(data)
         db.commit()
-        print("seed inventories")
+        print("seed inventories successfully")
 
     except SQLAlchemyError as error:
         print("seed inventories error ->", error)
