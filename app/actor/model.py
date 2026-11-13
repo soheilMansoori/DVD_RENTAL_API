@@ -17,3 +17,6 @@ class Actor(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now, onupdate=datetime.now
     )
+
+    def __repr__(self) -> str:
+        return f"Actor(id={self.id}, first_name={self.first_name!r}, last_name={self.last_name!r})"
