@@ -5,11 +5,12 @@ from fastapi import APIRouter, Depends, Path, status
 from app.city.service import CityService
 from app.core.dependencies import Pagination
 from app.core.exceptions import NotFoundException
+from app.core.schemas import PaginatedResponseSchema
 
 from .schema import (
+    AddressFilters,
     AddressResponseSchema,
     CreateAddressSchema,
-    PaginatedResponseSchema,
     PatchAddressSchema,
     UpdateAddressSchema,
 )
@@ -22,8 +23,9 @@ router = APIRouter(prefix="/addresses", tags=["Addresses"])
 def get_all_addresses(
     address_service: Annotated[AddressService, Depends(AddressService)],
     pagination: Annotated[Pagination, Depends(Pagination)],
+    filters: Annotated[AddressFilters, Depends(AddressFilters)],
 ):
-    return address_service.get_all(pagination)
+    return address_service.get_all(pagination, filters)
 
 
 @router.post(
@@ -35,7 +37,7 @@ def create_address(
     data: CreateAddressSchema,
 ):
     city = city_service.get_by_id(data.city_id)
-    if city is None:
+    if not city:
         raise NotFoundException("city not found")
 
     return address_service.create(data)
@@ -47,7 +49,7 @@ def get_address_by_id(
     address_id: int = Path(gt=0),
 ):
     address = address_service.get_by_id(address_id)
-    if address is None:
+    if not address:
         raise NotFoundException()
 
     return address
@@ -61,11 +63,11 @@ def update_address_by_id(
     address_id: int = Path(gt=0),
 ):
     address = address_service.get_by_id(address_id)
-    if address is None:
+    if not address:
         raise NotFoundException()
 
     city = city_service.get_by_id(data.city_id)
-    if city is None:
+    if not city:
         raise NotFoundException("city not found")
 
     return address_service.update(address_id, data)
@@ -79,12 +81,12 @@ def patch_address_by_id(
     address_id: int = Path(gt=0),
 ):
     address = address_service.get_by_id(address_id)
-    if address is None:
+    if not address:
         raise NotFoundException()
 
-    if not data.city_id is None:
+    if data.city_id:
         city = city_service.get_by_id(data.city_id)
-        if city is None:
+        if not city:
             raise NotFoundException("city not found")
 
     return address_service.patch(address_id, data)
@@ -99,5 +101,5 @@ def delete_address_by_id(
     address_id: int = Path(gt=0),
 ):
     address = address_service.delete(address_id)
-    if address is None:
+    if not address:
         raise NotFoundException()
