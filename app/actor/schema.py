@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -20,6 +19,11 @@ class BaseActorSchema(BaseModel):
         description="actor last_name",
         examples=["mansoori"],
     )
+
+
+class ActorFilters(BaseModel):
+    first_name: str | None = Field(None, min_length=4)
+    last_name: str | None = Field(None, min_length=4)
 
 
 class CreateActorSchema(BaseActorSchema):
@@ -52,14 +56,3 @@ class ActorResponseSchema(BaseActorSchema):
     id: int = Field(..., gt=0, description="actor id")
     created_at: datetime
     updated_at: datetime
-
-
-T = TypeVar("T")
-
-
-class PaginatedResponseSchema(BaseModel, Generic[T]):
-    items: list[T]
-    total: int
-    page: int
-    size: int
-    total_pages: int

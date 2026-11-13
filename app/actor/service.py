@@ -1,64 +1,56 @@
-from math import ceil
 from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import or_
 
 from app.core.dependencies import Pagination, get_db
+from app.core.schemas import PaginatedResponseSchema
 
 from .model import Actor
-from .schema import CreateActorSchema, PatchActorSchema, UpdateActorSchema
+from .schema import ActorFilters, CreateActorSchema, PatchActorSchema, UpdateActorSchema
 
 
 class ActorService:
-    db: Session
-    model: type[Actor] = Actor
-
     def __init__(self, db: Annotated[Session, Depends(get_db)]) -> None:
         self.db = db
+        self.model = Actor
 
-    def get_all(self, pagination: Pagination):
-        page, size, q = (pagination.page, pagination.size, pagination.q)
-        model = self.model
-        query = self.db.query(model)
+    def get_all(
+        self, pagination: Pagination, filters: ActorFilters
+    ) -> PaginatedResponseSchema[Actor]:
+        query = self.db.query(self.model)
 
-        if not q is None:
-            query = query.filter(
-                or_(
-                    model.first_name.ilike(f"%{q}%"),
-                    model.last_name.ilike(f"%{q}%"),
-                )
-            )
+        if filters.first_name:
+            query = query.filter(self.model.first_name.ilike(f"%{filters.first_name}%"))
+
+        if filters.last_name:
+            query = query.filter(self.model.last_name.ilike(f"%{filters.last_name}%"))
 
         total = query.count()
-        offset = (page - 1) * size
-        items = query.offset(offset).limit(size).all()
+        offset = (pagination.page - 1) * pagination.size
+        items = query.offset(offset).limit(pagination.size).all()
 
-        return {
-            "items": items,
-            "total": total,
-            "page": page,
-            "size": size,
-            "total_pages": ceil(total / size) if size > 0 else 0,
-        }
+        return PaginatedResponseSchema(
+            items=items,
+            total=total,
+            page=pagination.page,
+            size=pagination.size,
+        )
 
-    def get_by_id(self, actor_id: int):
+    def get_by_id(self, actor_id: int) -> Actor | None:
         return self.db.query(self.model).filter_by(id=actor_id).one_or_none()
 
-    def create(self, data: CreateActorSchema):
-        db, model = (self.db, self.model)
+    def create(self, data: CreateActorSchema) -> Actor:
+        new_actor = self.model(**data.model_dump())
 
-        new_actor = model(**data.model_dump())
-        db.add(new_actor)
-        db.commit()
-        db.refresh(new_actor)
+        self.db.add(new_actor)
+        self.db.commit()
+        self.db.refresh(new_actor)
 
         return new_actor
 
-    def update(self, actor_id: int, data: UpdateActorSchema):
-        db, model = (self.db, self.model)
-        actor = db.query(model).filter_by(id=actor_id).one_or_none()
+    def update(self, actor_id: int, data: UpdateActorSchema) -> Actor | None:
+        actor = self.db.query(self.model).filter_by(id=actor_id).one_or_none()
         if not actor:
             return None
 
@@ -66,13 +58,13 @@ class ActorService:
         for key, value in update_data.items():
             setattr(actor, key, value)
 
-        db.commit()
-        db.refresh(actor)
+        self.db.commit()
+        self.db.refresh(actor)
+
         return actor
 
-    def patch(self, actor_id: int, data: PatchActorSchema):
-        db, model = (self.db, self.model)
-        actor = db.query(model).filter_by(id=actor_id).one_or_none()
+    def patch(self, actor_id: int, data: PatchActorSchema) -> Actor | None:
+        actor = self.db.query(self.model).filter_by(id=actor_id).one_or_none()
         if not actor:
             return None
 
@@ -80,16 +72,15 @@ class ActorService:
         for key, value in update_data.items():
             setattr(actor, key, value)
 
-        db.commit()
-        db.refresh(actor)
+        self.db.commit()
+        self.db.refresh(actor)
         return actor
 
-    def delete(self, actor_id: int):
-        db, model = (self.db, self.model)
-        actor = db.query(model).filter_by(id=actor_id).one_or_none()
-        if actor:
-            db.delete(actor)
-            db.commit()
-            return True
+    def delete(self, actor_id: int) -> Actor | None:
+        actor = self.db.query(self.model).filter_by(id=actor_id).one_or_none()
+        if not actor:
+            return None
 
-        return False
+        self.db.delete(actor)
+        self.db.commit()
+        return actor

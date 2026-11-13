@@ -4,11 +4,12 @@ from fastapi import APIRouter, Depends, Path, status
 
 from app.core.dependencies import Pagination
 from app.core.exceptions import NotFoundException
+from app.core.schemas import PaginatedResponseSchema
 
 from .schema import (
+    ActorFilters,
     ActorResponseSchema,
     CreateActorSchema,
-    PaginatedResponseSchema,
     PatchActorSchema,
     UpdateActorSchema,
 )
@@ -21,8 +22,9 @@ router = APIRouter(prefix="/actors", tags=["Actors"])
 def get_all_actors(
     actor_service: Annotated[ActorService, Depends(ActorService)],
     pagination: Annotated[Pagination, Depends(Pagination)],
+    filters: Annotated[ActorFilters, Depends(ActorFilters)],
 ):
-    return actor_service.get_all(pagination)
+    return actor_service.get_all(pagination, filters)
 
 
 @router.post(
