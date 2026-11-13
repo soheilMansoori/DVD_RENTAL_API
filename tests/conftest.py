@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import StaticPool, create_engine
 from sqlalchemy.orm import sessionmaker
 
+from app.actor.model import Actor
 from app.core.database import Base
 from app.core.dependencies import get_db
 from app.main import app
@@ -38,3 +39,21 @@ def client(db_session):
     app.dependency_overrides[get_db] = override_get_db
     yield TestClient(app)
     app.dependency_overrides.clear()
+
+
+# ---------- useful fixtures ----------
+@pytest.fixture
+def actor(db_session):
+    """Create one actor and return it"""
+
+    actor = Actor(first_name="soheil", last_name="mansoori")
+    db_session.add(actor)
+    db_session.commit()
+    db_session.refresh(actor)
+
+    yield actor
+
+    existing = db_session.get(Actor, actor.id)
+    if existing:
+        db_session.delete(existing)
+        db_session.commit()
