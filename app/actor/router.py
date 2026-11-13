@@ -35,16 +35,6 @@ def create_actor(
     return actor_service.create(data)
 
 
-@router.get("/search", response_model=PaginatedResponseSchema[ActorResponseSchema])
-def search_actors(
-    db: Annotated[Session, Depends(get_db)],
-    q: Annotated[str, Query(..., min_length=1)],
-    page: Annotated[int, Query(ge=1)] = 1,
-    size: Annotated[int, Query(ge=1, le=100)] = 10,
-):
-    return ActorService.search(db, page=page, size=size, q=q)
-
-
 @router.get("/{actor_id}", response_model=ActorResponseSchema)
 def get_actor_by_id(
     actor_service: Annotated[ActorService, Depends(ActorService)],
