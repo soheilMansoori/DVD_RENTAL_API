@@ -23,3 +23,6 @@ class Address(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now, onupdate=datetime.now
     )
+
+    def __repr__(self) -> str:
+        return f"""Address(id={self.id}, address={self.address!r}, address2={self.address2!r}, district={self.district}, postal_code={self.postal_code}, phone={self.phone}, city_id={self.city_id})"""
