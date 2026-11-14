@@ -4,12 +4,9 @@ from fastapi import APIRouter, Depends, Path, status
 
 from app.core.dependencies import Pagination
 from app.core.exceptions import NotFoundException
+from app.core.schemas import PaginatedResponseSchema
 
-from .schema import (
-    CategoryResponseSchema,
-    CreateCategorySchema,
-    PaginatedResponseSchema,
-)
+from .schema import CategoryFiltersSchema, CategoryResponseSchema, CreateCategorySchema
 from .service import CategoryService
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
@@ -19,8 +16,9 @@ router = APIRouter(prefix="/categories", tags=["Categories"])
 def get_all_categories(
     category_service: Annotated[CategoryService, Depends(CategoryService)],
     pagination: Annotated[Pagination, Depends(Pagination)],
+    filters: Annotated[CategoryFiltersSchema, Depends(CategoryFiltersSchema)],
 ):
-    return category_service.get_all(pagination)
+    return category_service.get_all(pagination, filters)
 
 
 @router.post(
@@ -40,7 +38,7 @@ def get_category_by_id(
     category_id: Annotated[int, Path(gt=0)],
 ):
     category = category_service.get_by_id(category_id)
-    if category is None:
+    if not category:
         raise NotFoundException()
 
     return category
@@ -52,5 +50,5 @@ def delete_category_by_id(
     category_id: Annotated[int, Path(gt=0)],
 ):
     category = category_service.delete(category_id)
-    if category is None:
+    if not category:
         raise NotFoundException()
