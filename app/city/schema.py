@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -24,18 +23,12 @@ class CreateCitySchema(BaseCitySchema):
     pass
 
 
+class CityFiltersSchema(BaseModel):
+    city: str | None = Field(None, max_length=50)
+    country_id: int | None = Field(None, gt=0)
+
+
 class CityResponseSchema(BaseCitySchema):
     id: int
     created_at: datetime
     updated_at: datetime
-
-
-T = TypeVar("T")
-
-
-class PaginatedResponseSchema(BaseModel, Generic[T]):
-    items: list[T]
-    total: int
-    page: int
-    size: int
-    total_pages: int

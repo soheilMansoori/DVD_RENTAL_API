@@ -4,9 +4,10 @@ from fastapi import APIRouter, Depends, Path, status
 
 from app.core.dependencies import Pagination
 from app.core.exceptions import NotFoundException
+from app.core.schemas import PaginatedResponseSchema
 from app.country.service import CountryService
 
-from .schema import CityResponseSchema, CreateCitySchema, PaginatedResponseSchema
+from .schema import CityFiltersSchema, CityResponseSchema, CreateCitySchema
 from .service import CityService
 
 router = APIRouter(prefix="/cities", tags=["Cities"])
@@ -16,8 +17,9 @@ router = APIRouter(prefix="/cities", tags=["Cities"])
 def get_all_cities(
     city_service: Annotated[CityService, Depends(CityService)],
     pagination: Annotated[Pagination, Depends(Pagination)],
+    filters: Annotated[CityFiltersSchema, Depends(CityFiltersSchema)],
 ):
-    return city_service.get_all(pagination)
+    return city_service.get_all(pagination, filters)
 
 
 @router.post(
@@ -28,8 +30,8 @@ def create_city(
     country_service: Annotated[CountryService, Depends(CountryService)],
     data: CreateCitySchema,
 ):
-    result = country_service.get_by_id(data.country_id)
-    if result is None:
+    country = country_service.get_by_id(data.country_id)
+    if not country:
         raise NotFoundException("country not found")
 
     return city_service.create(data)
@@ -41,7 +43,7 @@ def get_city_by_id(
     city_id: Annotated[int, Path(gt=0)],
 ):
     city = city_service.get_by_id(city_id)
-    if city is None:
+    if not city:
         raise NotFoundException()
 
     return city
@@ -53,5 +55,5 @@ def delete_city_by_id(
     city_id: Annotated[int, Path(gt=0)],
 ):
     city = city_service.delete(city_id)
-    if city is None:
+    if not city:
         raise NotFoundException()

@@ -1,59 +1,58 @@
-from math import ceil
 from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import Pagination, get_db
+from app.core.schemas import PaginatedResponseSchema
 
 from .model import City
-from .schema import CreateCitySchema
+from .schema import CityFiltersSchema, CreateCitySchema
 
 
 class CityService:
-    db: Session
-    model: type[City] = City
-
     def __init__(self, db: Annotated[Session, Depends(get_db)]) -> None:
-        self.db = db
+        self.db: Session = db
+        self.model = City
 
-    def get_all(self, pagination: Pagination):
-        page, size, q = (pagination.page, pagination.size, pagination.q)
-        db, model = self.db, self.model
+    def get_all(
+        self, pagination: Pagination, filters: CityFiltersSchema
+    ) -> PaginatedResponseSchema[City]:
 
-        query = db.query(model)
+        query = self.db.query(self.model)
 
-        if not q is None:
-            query = query.filter(model.city.ilike(f"%{q}%"))
+        if filters.city:
+            query = query.filter(self.model.city.ilike(f"%{filters.city}%"))
+
+        if filters.country_id:
+            query = query.filter_by(country_id=filters.country_id)
 
         total = query.count()
-        offset = (page - 1) * size
-        items = query.limit(size).offset(offset).all()
+        offset = (pagination.page - 1) * pagination.size
+        items = query.limit(pagination.size).offset(offset).all()
 
-        return {
-            "items": items,
-            "total": total,
-            "page": page,
-            "size": size,
-            "total_pages": ceil(total / size) if size > 0 else 0,
-        }
+        return PaginatedResponseSchema(
+            items=items,
+            total=total,
+            page=pagination.page,
+            size=pagination.size,
+        )
 
-    def get_by_id(self, city_id: int):
+    def get_by_id(self, city_id: int) -> City | None:
         return self.db.query(self.model).filter_by(id=city_id).one_or_none()
 
-    def create(self, data: CreateCitySchema):
-        db, model = self.db, self.model
-        new_language = model(**data.model_dump())
-        db.add(new_language)
-        db.commit()
-        db.refresh(new_language)
-        return new_language
+    def create(self, data: CreateCitySchema) -> City:
+        new_city = self.model(**data.model_dump())
+        self.db.add(new_city)
+        self.db.commit()
+        self.db.refresh(new_city)
+        return new_city
 
-    def delete(self, city_id: int):
-        db, model = self.db, self.model
-        language = db.query(model).filter_by(id=city_id).one_or_none()
-        if language:
-            db.delete(language)
-            db.commit()
-            return True
-        return False
+    def delete(self, city_id: int) -> City | None:
+        city = self.db.query(self.model).filter_by(id=city_id).one_or_none()
+        if not city:
+            return None
+
+        self.db.delete(city)
+        self.db.commit()
+        return city
