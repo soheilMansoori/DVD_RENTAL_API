@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.actor.model import Actor
 from app.address.model import Address
+from app.category.model import Category
 from app.city.model import City
 from app.core.database import Base
 from app.core.dependencies import get_db
@@ -112,6 +113,22 @@ def address(db_session, city):
     yield address
 
     existing = db_session.get(City, address.id)
+    if existing:
+        db_session.delete(existing)
+        db_session.commit()
+
+
+@pytest.fixture
+def category(db_session):
+    """create one category and return it"""
+    category = Category(name="action")
+    db_session.add(category)
+    db_session.commit()
+    db_session.refresh(category)
+
+    yield category
+
+    existing = db_session.get(City, category.id)
     if existing:
         db_session.delete(existing)
         db_session.commit()
