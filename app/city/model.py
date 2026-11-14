@@ -20,3 +20,6 @@ class City(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now, onupdate=datetime.now
     )
+
+    def __repr__(self) -> str:
+        return f"City(id={self.id}, city={self.city!r}, country_id={self.country_id})"
