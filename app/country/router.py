@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends, Path, status
 
 from app.core.dependencies import Pagination
 from app.core.exceptions import NotFoundException
+from app.core.schemas import PaginatedResponseSchema
 
-from .schema import CountryResponseSchema, CreateCountrySchema, PaginatedResponseSchema
+from .schema import CountryFiltersSchema, CountryResponseSchema, CreateCountrySchema
 from .service import CountryService
 
 router = APIRouter(prefix="/countries", tags=["Countries"])
@@ -15,8 +16,9 @@ router = APIRouter(prefix="/countries", tags=["Countries"])
 def get_all_countries(
     country_service: Annotated[CountryService, Depends(CountryService)],
     pagination: Annotated[Pagination, Depends(Pagination)],
+    filters: Annotated[CountryFiltersSchema, Depends(CountryFiltersSchema)],
 ):
-    return country_service.get_all(pagination)
+    return country_service.get_all(pagination, filters)
 
 
 @router.post(

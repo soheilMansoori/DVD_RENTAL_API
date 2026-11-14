@@ -1,59 +1,54 @@
-from math import ceil
 from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import Pagination, get_db
+from app.core.schemas import PaginatedResponseSchema
 
 from .model import Country
-from .schema import CreateCountrySchema
+from .schema import CountryFiltersSchema, CreateCountrySchema
 
 
 class CountryService:
-    db: Session
-    model: type[Country] = Country
-
     def __init__(self, db: Annotated[Session, Depends(get_db)]) -> None:
-        self.db = db
+        self.db: Session = db
+        self.model = Country
 
-    def get_all(self, pagination: Pagination):
-        page, size, q = (pagination.page, pagination.size, pagination.q)
-        db, model = self.db, self.model
+    def get_all(
+        self, pagination: Pagination, filters: CountryFiltersSchema
+    ) -> PaginatedResponseSchema[Country]:
+        query = self.db.query(self.model)
 
-        query = db.query(model)
-
-        if not q is None:
-            query = query.filter(model.country.ilike(f"%{q}%"))
+        if filters.country:
+            query = query.filter(self.model.country.ilike(f"%{filters.country}%"))
 
         total = query.count()
-        offset = (page - 1) * size
-        items = query.limit(size).offset(offset).all()
+        offset = (pagination.page - 1) * pagination.size
+        items = query.limit(pagination.size).offset(offset).all()
 
-        return {
-            "items": items,
-            "total": total,
-            "page": page,
-            "size": size,
-            "total_pages": ceil(total / size) if size > 0 else 0,
-        }
+        return PaginatedResponseSchema(
+            items=items,
+            page=pagination.page,
+            size=pagination.size,
+            total=total,
+        )
 
-    def get_by_id(self, language_id: int):
-        return self.db.query(self.model).filter_by(id=language_id).one_or_none()
+    def get_by_id(self, country_id: int) -> Country | None:
+        return self.db.query(self.model).filter_by(id=country_id).one_or_none()
 
-    def create(self, data: CreateCountrySchema):
-        db, model = self.db, self.model
-        new_language = model(**data.model_dump())
-        db.add(new_language)
-        db.commit()
-        db.refresh(new_language)
-        return new_language
+    def create(self, data: CreateCountrySchema) -> Country:
+        new_country = self.model(**data.model_dump())
+        self.db.add(new_country)
+        self.db.commit()
+        self.db.refresh(new_country)
+        return new_country
 
-    def delete(self, language_id: int):
-        db, model = self.db, self.model
-        language = db.query(model).filter_by(id=language_id).one_or_none()
-        if language:
-            db.delete(language)
-            db.commit()
-            return True
-        return False
+    def delete(self, country_id: int) -> Country | None:
+        country = self.db.query(self.model).filter_by(id=country_id).one_or_none()
+        if not country:
+            return None
+
+        self.db.delete(country)
+        self.db.commit()
+        return country
