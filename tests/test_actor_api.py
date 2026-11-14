@@ -3,15 +3,19 @@ from app.actor.model import Actor
 
 def test_create_actor(client):
     response = client.post(
-        "/actors", json={"first_name": "soheil", "last_name": "mansoori"}
+        "/actors",
+        json={
+            "first_name": "soheil",
+            "last_name": "mansoori",
+        },
     )
 
     assert response.status_code == 201
 
     data = response.json()
-    assert "first_name" in data
-    assert "last_name" in data
     assert "id" in data
+    assert data["first_name"] == "soheil"
+    assert data["last_name"] == "mansoori"
 
 
 def test_get_all_actors(client, actor):
@@ -24,6 +28,7 @@ def test_get_all_actors(client, actor):
     assert "page" in data
     assert "size" in data
     assert data["total"] == 1
+    assert len(data["items"]) == 1
 
 
 def test_get_actor_by_id(client, actor):
@@ -31,7 +36,7 @@ def test_get_actor_by_id(client, actor):
     assert response.status_code == 200
 
     data = response.json()
-    assert "id" in data
+    assert data["id"] == actor.id
     assert "first_name" in data
     assert "last_name" in data
     assert "created_at" in data
@@ -44,16 +49,50 @@ def test_get_actor_not_found(client):
 
 
 def test_update_actor(client, actor):
-    response = client.patch(f"/actors/{actor.id}", json={"first_name": "new_name"})
+    response = client.put(
+        f"/actors/{actor.id}",
+        json={
+            "first_name": "updated_name",
+            "last_name": "updated_lastname",
+        },
+    )
     assert response.status_code == 200
-    data = response.json()
 
+    data = response.json()
     assert data["id"] == actor.id
-    assert data["first_name"] == "new_name"
+    assert data["first_name"] == "updated_name"
+    assert data["last_name"] == "updated_lastname"
 
 
 def test_update_actor_not_found(client):
-    response = client.patch("/actors/999", json={"first_name": "whatever"})
+    response = client.put(
+        "/actors/999",
+        json={
+            "first_name": "whatever",
+            "last_name": "whatever",
+        },
+    )
+    assert response.status_code == 404
+
+
+def test_patch_actor(client, actor):
+    response = client.patch(
+        f"/actors/{actor.id}",
+        json={"first_name": "patched_name"},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["id"] == actor.id
+    assert data["first_name"] == "patched_name"
+    assert data["last_name"] == actor.last_name
+
+
+def test_patch_actor_not_found(client):
+    response = client.patch(
+        "/actors/999",
+        json={"first_name": "whatever"},
+    )
     assert response.status_code == 404
 
 
