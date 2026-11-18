@@ -12,6 +12,7 @@ from app.core.dependencies import get_db
 from app.country.model import Country
 from app.customer.model import Customer
 from app.film.model import Film
+from app.film_actor.model import FilmActor
 from app.language.model import Language
 from app.main import app
 from app.staff.model import Staff
@@ -242,6 +243,21 @@ def film(db_session, language):
     yield film
 
     existing = db_session.get(Film, film.id)
+    if existing:
+        db_session.delete(existing)
+        db_session.commit()
+
+
+@pytest.fixture
+def film_actor(db_session, film, actor):
+    relation = FilmActor(film_id=film.id, actor_id=actor.id)
+    db_session.add(relation)
+    db_session.commit()
+    db_session.refresh(relation)
+
+    yield relation
+
+    existing = db_session.get(FilmActor, (relation.actor_id, relation.film_id))
     if existing:
         db_session.delete(existing)
         db_session.commit()
