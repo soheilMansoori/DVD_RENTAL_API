@@ -11,8 +11,8 @@ class Store(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    manager_staff_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("staff.id"), nullable=False
+    manager_staff_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("staff.id"), nullable=True
     )
 
     address_id: Mapped[int] = mapped_column(
