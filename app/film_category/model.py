@@ -20,3 +20,6 @@ class FilmCategory(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now, onupdate=datetime.now
     )
+
+    def __repr__(self) -> str:
+        return f"FilmCategory(film_id={self.film_id}, category_id={self.category_id})"
