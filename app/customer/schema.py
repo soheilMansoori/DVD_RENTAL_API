@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Generic, TypeVar
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -31,18 +30,11 @@ class PatchCustomerSchema(BaseModel):
     store_id: int | None = Field(None, gt=0)
 
 
+class CustomerFiltersSchema(PatchCustomerSchema):
+    pass
+
+
 class CustomerResponseSchema(BaseCustomerSchema):
     id: int
     created_at: datetime
     updated_at: datetime
-
-
-T = TypeVar("T")
-
-
-class PaginatedResponseSchema(BaseModel, Generic[T]):
-    items: list[T]
-    total: int
-    page: int
-    size: int
-    total_pages: int

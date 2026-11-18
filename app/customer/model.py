@@ -25,3 +25,6 @@ class Customer(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now, onupdate=datetime.now
     )
+
+    def __repr__(self) -> str:
+        return f"Customer(id={self.id}, store_id={self.store_id}, first_name={self.first_name!r} last_name={self.last_name!r} email={self.email!r} address_id={self.address_id} active={self.active})"

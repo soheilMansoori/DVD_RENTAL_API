@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, Path, status
 from app.address.service import AddressService
 from app.core.dependencies import Pagination
 from app.core.exceptions import NotFoundException
+from app.core.schemas import PaginatedResponseSchema
 from app.store.service import StoreService
 
 from .schema import (
     CreateCustomerSchema,
+    CustomerFiltersSchema,
     CustomerResponseSchema,
-    PaginatedResponseSchema,
     PatchCustomerSchema,
     UpdatedCustomerSchema,
 )
@@ -23,8 +24,9 @@ router = APIRouter(prefix="/customers", tags=["Customers"])
 def get_all_customers(
     customer_service: Annotated[CustomerService, Depends(CustomerService)],
     pagination: Annotated[Pagination, Depends(Pagination)],
+    filters: Annotated[CustomerFiltersSchema, Depends(CustomerFiltersSchema)],
 ):
-    return customer_service.get_all(pagination)
+    return customer_service.get_all(pagination, filters)
 
 
 @router.post(
@@ -72,12 +74,12 @@ def patch_customer_by_id(
     if not customer:
         raise NotFoundException()
 
-    if data.address_id is not None:
+    if data.address_id:
         address = address_service.get_by_id(data.address_id)
         if not address:
             raise NotFoundException("address not found")
 
-    if data.store_id is not None:
+    if data.store_id:
         store = store_service.get_by_id(data.store_id)
         if not store:
             raise NotFoundException("store not found")
@@ -113,6 +115,6 @@ def delete_customer_by_id(
     customer_service: Annotated[CustomerService, Depends(CustomerService)],
     customer_id: Annotated[int, Path(gt=0)],
 ):
-    result = customer_service.delete(customer_id)
-    if not result:
+    customer = customer_service.delete(customer_id)
+    if not customer:
         raise NotFoundException()
