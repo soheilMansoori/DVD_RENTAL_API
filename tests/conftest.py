@@ -10,7 +10,10 @@ from app.city.model import City
 from app.core.database import Base
 from app.core.dependencies import get_db
 from app.country.model import Country
+from app.customer.model import Customer
 from app.main import app
+from app.staff.model import Staff
+from app.store.model import Store
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(
@@ -129,6 +132,73 @@ def category(db_session):
     yield category
 
     existing = db_session.get(City, category.id)
+    if existing:
+        db_session.delete(existing)
+        db_session.commit()
+
+
+@pytest.fixture
+def store_and_staff(db_session, address):
+    store = Store(manager_staff_id=None, address_id=address.id)
+    db_session.add(store)
+    db_session.commit()
+    db_session.refresh(store)
+
+    staff = Staff(
+        first_name="soheil",
+        last_name="mansoori",
+        address_id=address.id,
+        email="soheil@gmail.com",
+        store_id=store.id,
+        active=True,
+        username="soheil_dev",
+        password="hashed_password",
+    )
+    db_session.add(staff)
+    db_session.commit()
+    db_session.refresh(staff)
+
+    store.manager_staff_id = staff.id
+    db_session.commit()
+    db_session.refresh(store)
+
+    yield {"store": store, "staff": staff}
+
+    db_session.delete(staff)
+    db_session.delete(store)
+    db_session.commit()
+
+
+@pytest.fixture
+def store(store_and_staff):
+    """create one store and return it"""
+    return store_and_staff["store"]
+
+
+@pytest.fixture
+def staff(store_and_staff):
+    """create one staff and return it"""
+    return store_and_staff["staff"]
+
+
+@pytest.fixture
+def customer(db_session, store, address):
+    """create one customer and return it"""
+    customer = Customer(
+        first_name="soheil",
+        last_name="mansoori",
+        email="soheil@gmail.com",
+        store_id=store.id,
+        address_id=address.id,
+        active=True,
+    )
+    db_session.add(customer)
+    db_session.commit()
+    db_session.refresh(customer)
+
+    yield customer
+
+    existing = db_session.get(Customer, customer.id)
     if existing:
         db_session.delete(existing)
         db_session.commit()
