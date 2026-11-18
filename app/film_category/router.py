@@ -5,13 +5,27 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Path, status
 from app.category.service import CategoryService
 from app.core.dependencies import Pagination
 from app.core.exceptions import NotFoundException
+from app.core.schemas import PaginatedResponseSchema
 from app.film.service import FilmService
 
-from .schema import FilmCategoryResponseSchema, PaginatedResponseSchema
+from .schema import FilmCategoryResponseSchema
 from .service import FilmCategoryService
+
+
+def check_film_exists(
+    film_id: Annotated[int, Path(gt=0)],
+    film_service: Annotated[FilmService, Depends(FilmService)],
+):
+    film = film_service.get_by_id(film_id)
+    if not film:
+        raise NotFoundException("film not found")
+
+    return film
+
 
 router = APIRouter(
     prefix="/films/{film_id}/categories",
+    dependencies=[Depends(check_film_exists)],
     tags=["Film Categories"],
 )
 
@@ -20,14 +34,8 @@ router = APIRouter(
 def get_film_categories(
     film_id: Annotated[int, Path(gt=0)],
     pagination: Annotated[Pagination, Depends(Pagination)],
-    film_service: Annotated[FilmService, Depends(FilmService)],
     film_category_service: Annotated[FilmCategoryService, Depends(FilmCategoryService)],
 ):
-    film = film_service.get_by_id(film_id)
-
-    if not film:
-        raise NotFoundException("film not found")
-
     return film_category_service.get_categories_by_film(film_id, pagination)
 
 
@@ -37,15 +45,9 @@ def get_film_categories(
 def add_category_to_film(
     film_id: Annotated[int, Path(gt=0)],
     category_id: Annotated[int, Body(embed=True, gt=0)],
-    film_service: Annotated[FilmService, Depends(FilmService)],
     category_service: Annotated[CategoryService, Depends(CategoryService)],
     film_category_service: Annotated[FilmCategoryService, Depends(FilmCategoryService)],
 ):
-    film = film_service.get_by_id(film_id)
-
-    if not film:
-        raise NotFoundException("film not found")
-
     category = category_service.get_by_id(category_id)
 
     if not category:
@@ -64,15 +66,9 @@ def add_category_to_film(
 def delete_category_from_film(
     film_id: Annotated[int, Path(gt=0)],
     category_id: Annotated[int, Path(gt=0)],
-    film_service: Annotated[FilmService, Depends()],
     category_service: Annotated[CategoryService, Depends()],
     film_category_service: Annotated[FilmCategoryService, Depends()],
 ):
-    film = film_service.get_by_id(film_id)
-
-    if not film:
-        raise NotFoundException("film not found")
-
     category = category_service.get_by_id(category_id)
 
     if not category:
