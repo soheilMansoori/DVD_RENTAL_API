@@ -13,6 +13,7 @@ from app.country.model import Country
 from app.customer.model import Customer
 from app.film.model import Film
 from app.film_actor.model import FilmActor
+from app.film_category.model import FilmCategory
 from app.language.model import Language
 from app.main import app
 from app.staff.model import Staff
@@ -258,6 +259,25 @@ def film_actor(db_session, film, actor):
     yield relation
 
     existing = db_session.get(FilmActor, (relation.actor_id, relation.film_id))
+    if existing:
+        db_session.delete(existing)
+        db_session.commit()
+
+
+@pytest.fixture
+def film_category(db_session, film, category):
+    """create the relation between film and category"""
+    relation = FilmCategory(
+        film_id=film.id,
+        category_id=category.id,
+    )
+    db_session.add(relation)
+    db_session.commit()
+    db_session.refresh(relation)
+
+    yield relation
+
+    existing = db_session.get(FilmCategory, (relation.film_id, relation.category_id))
     if existing:
         db_session.delete(existing)
         db_session.commit()
