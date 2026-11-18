@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -48,21 +47,11 @@ class PatchFilmSchema(BaseModel):
     replacement_cost: float | None = Field(None, ge=0.0)
 
 
+class FileFiltersSchema(PatchFilmSchema):
+    pass
+
+
 class FilmResponseSchema(BaseFilmSchema):
     id: int
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-T = TypeVar("T")
-
-
-class PaginatedResponseSchema(BaseModel, Generic[T]):
-    items: list[T]
-    total: int
-    page: int
-    size: int
-    total_pages: int
