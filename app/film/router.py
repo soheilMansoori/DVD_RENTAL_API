@@ -4,12 +4,13 @@ from fastapi import APIRouter, Depends, Path, status
 
 from app.core.dependencies import Pagination
 from app.core.exceptions import NotFoundException
+from app.core.schemas import PaginatedResponseSchema
 from app.language.service import LanguageService
 
 from .schema import (
     CreateFilmSchema,
+    FileFiltersSchema,
     FilmResponseSchema,
-    PaginatedResponseSchema,
     PatchFilmSchema,
     UpdateFilmSchema,
 )
@@ -22,8 +23,9 @@ router = APIRouter(prefix="/films", tags=["Films"])
 def get_all_films(
     film_service: Annotated[FilmService, Depends(FilmService)],
     pagination: Annotated[Pagination, Depends(Pagination)],
+    filters: Annotated[FileFiltersSchema, Depends(FileFiltersSchema)],
 ):
-    return film_service.get_all(pagination)
+    return film_service.get_all(pagination, filters)
 
 
 @router.post(
@@ -35,7 +37,7 @@ def create_film(
     data: CreateFilmSchema,
 ):
     language = language_service.get_by_id(data.language_id)
-    if language is None:
+    if not language:
         raise NotFoundException("language not found")
 
     return film_service.create(data)
@@ -61,9 +63,9 @@ def patch_film_by_id(
     data: PatchFilmSchema,
 ):
 
-    if not data.language_id is None:
+    if data.language_id:
         language = language_service.get_by_id(data.language_id)
-        if language is None:
+        if not language:
             raise NotFoundException("language not found")
 
     film = film_service.patch(film_id, data)
@@ -81,7 +83,7 @@ def update_film_by_id(
     data: UpdateFilmSchema,
 ):
     language = language_service.get_by_id(data.language_id)
-    if language is None:
+    if not language:
         raise NotFoundException("language not found")
 
     film = film_service.update(film_id, data)
