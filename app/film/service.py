@@ -9,7 +9,7 @@ from app.core.schemas import PaginatedResponseSchema
 from .model import Film
 from .schema import (
     CreateFilmSchema,
-    FileFiltersSchema,
+    FilmFiltersSchema,
     PatchFilmSchema,
     UpdateFilmSchema,
 )
@@ -21,7 +21,7 @@ class FilmService:
         self.model = Film
 
     def get_all(
-        self, pagination: Pagination, filters: FileFiltersSchema
+        self, pagination: Pagination, filters: FilmFiltersSchema
     ) -> PaginatedResponseSchema[Film]:
         query = self.db.query(self.model)
 

@@ -9,7 +9,7 @@ from app.language.service import LanguageService
 
 from .schema import (
     CreateFilmSchema,
-    FileFiltersSchema,
+    FilmFiltersSchema,
     FilmResponseSchema,
     PatchFilmSchema,
     UpdateFilmSchema,
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/films", tags=["Films"])
 def get_all_films(
     film_service: Annotated[FilmService, Depends(FilmService)],
     pagination: Annotated[Pagination, Depends(Pagination)],
-    filters: Annotated[FileFiltersSchema, Depends(FileFiltersSchema)],
+    filters: Annotated[FilmFiltersSchema, Depends(FilmFiltersSchema)],
 ):
     return film_service.get_all(pagination, filters)
 

@@ -47,7 +47,7 @@ class PatchFilmSchema(BaseModel):
     replacement_cost: float | None = Field(None, ge=0.0)
 
 
-class FileFiltersSchema(PatchFilmSchema):
+class FilmFiltersSchema(PatchFilmSchema):
     pass
 
 
