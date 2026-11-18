@@ -5,24 +5,38 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Path, status
 from app.actor.service import ActorService
 from app.core.dependencies import Pagination
 from app.core.exceptions import NotFoundException
+from app.core.schemas import PaginatedResponseSchema
 from app.film.service import FilmService
 
-from .schema import FilmActorResponseSchema, PaginatedResponseSchema
+from .schema import FilmActorResponseSchema
 from .service import FilmActorService
 
-router = APIRouter(prefix="/films/{film_id}/actors", tags=["Film Actors"])
+
+# check film exists dependence
+def check_film_exists(
+    film_id: Annotated[int, Path(gt=0)],
+    film_service: Annotated[FilmService, Depends(FilmService)],
+):
+    film = film_service.get_by_id(film_id)
+    if not film:
+        raise NotFoundException("film not found")
+
+    return film
+
+
+router = APIRouter(
+    prefix="/films/{film_id}/actors",
+    dependencies=[Depends(check_film_exists)],
+    tags=["Film Actors"],
+)
 
 
 @router.get("/", response_model=PaginatedResponseSchema[FilmActorResponseSchema])
 def get_film_actors(
     film_actor_service: Annotated[FilmActorService, Depends(FilmActorService)],
-    film_service: Annotated[FilmService, Depends(FilmService)],
     film_id: Annotated[int, Path(gt=0)],
     pagination: Annotated[Pagination, Depends(Pagination)],
 ):
-    film = film_service.get_by_id(film_id)
-    if not film:
-        raise NotFoundException("film not found")
 
     return film_actor_service.get_actors_by_film(film_id, pagination)
 
@@ -32,15 +46,10 @@ def get_film_actors(
 )
 def add_actor_to_film(
     film_actor_service: Annotated[FilmActorService, Depends(FilmActorService)],
-    film_service: Annotated[FilmService, Depends(FilmService)],
     actor_service: Annotated[ActorService, Depends(ActorService)],
     film_id: Annotated[int, Path(gt=0)],
     actor_id: Annotated[int, Body(embed=True, gt=0)],
 ):
-
-    film = film_service.get_by_id(film_id)
-    if not film:
-        raise NotFoundException("film not found")
 
     actor = actor_service.get_by_id(actor_id)
     if not actor:

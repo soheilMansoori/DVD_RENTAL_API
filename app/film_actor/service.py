@@ -4,59 +4,59 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import Pagination, get_db
+from app.core.schemas import PaginatedResponseSchema
 
 from .model import FilmActor
 
 
 class FilmActorService:
-    db: Session
-    model: type[FilmActor] = FilmActor
-
     def __init__(self, db: Annotated[Session, Depends(get_db)]) -> None:
-        self.db = db
+        self.db: Session = db
+        self.model = FilmActor
 
-    def get_actors_by_film(self, film_id: int, pagination: Pagination):
-        page, size = pagination.page, pagination.size
-        db, model = self.db, self.model
-
-        query = db.query(model).filter(model.film_id == film_id)
+    def get_actors_by_film(
+        self, film_id: int, pagination: Pagination
+    ) -> PaginatedResponseSchema[FilmActor]:
+        query = self.db.query(self.model).filter(self.model.film_id == film_id)
 
         total = query.count()
-        offset = (page - 1) * size
-        items = query.order_by(model.actor_id).limit(size).offset(offset).all()
+        offset = (pagination.page - 1) * pagination.size
+        items = (
+            query.order_by(self.model.actor_id)
+            .limit(pagination.size)
+            .offset(offset)
+            .all()
+        )
 
-        return {
-            "items": items,
-            "total": total,
-            "page": page,
-            "size": size,
-            "total_pages": ceil(total / size) if size > 0 else 0,
-        }
+        return PaginatedResponseSchema(
+            items=items,
+            total=total,
+            page=pagination.page,
+            size=pagination.size,
+        )
 
-    def add_actor_to_film(self, film_id: int, actor_id: int):
-        db, model = self.db, self.model
-        film_actor = model(film_id=film_id, actor_id=actor_id)
-        db.add(film_actor)
-        db.commit()
-        db.refresh(film_actor)
+    def add_actor_to_film(self, film_id: int, actor_id: int) -> FilmActor:
+        film_actor = self.model(film_id=film_id, actor_id=actor_id)
+        self.db.add(film_actor)
+        self.db.commit()
+        self.db.refresh(film_actor)
         return film_actor
 
-    def delete_actor_from_film(self, film_id: int, actor_id: int):
-        db, model = self.db, self.model
+    def delete_actor_from_film(self, film_id: int, actor_id: int) -> FilmActor | None:
         film_actor = (
-            db.query(model)
-            .filter(model.film_id == film_id, model.actor_id == actor_id)
+            self.db.query(self.model)
+            .filter(self.model.film_id == film_id, self.model.actor_id == actor_id)
             .one_or_none()
         )
 
-        if film_actor is None:
-            return False
+        if not film_actor:
+            return None
 
-        db.delete(film_actor)
-        db.commit()
-        return True
+        self.db.delete(film_actor)
+        self.db.commit()
+        return film_actor
 
-    def is_actor_in_film(self, film_id: int, actor_id: int):
+    def is_actor_in_film(self, film_id: int, actor_id: int) -> bool:
         exists = (
             self.db.query(self.model)
             .filter(self.model.film_id == film_id, self.model.actor_id == actor_id)
