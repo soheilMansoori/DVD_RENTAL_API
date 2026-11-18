@@ -11,6 +11,8 @@ from app.core.database import Base
 from app.core.dependencies import get_db
 from app.country.model import Country
 from app.customer.model import Customer
+from app.film.model import Film
+from app.language.model import Language
 from app.main import app
 from app.staff.model import Staff
 from app.store.model import Store
@@ -199,6 +201,47 @@ def customer(db_session, store, address):
     yield customer
 
     existing = db_session.get(Customer, customer.id)
+    if existing:
+        db_session.delete(existing)
+        db_session.commit()
+
+
+@pytest.fixture
+def language(db_session):
+    """create one language and return it"""
+    language = Language(name="english")
+    db_session.add(language)
+    db_session.commit()
+    db_session.refresh(language)
+
+    yield language
+
+    existing = db_session.get(Language, language.id)
+    if existing:
+        db_session.delete(existing)
+        db_session.commit()
+
+
+@pytest.fixture
+def film(db_session, language):
+    """create one film and return it"""
+    film = Film(
+        title="breaking bad",
+        description="HBO film",
+        release_year=2008,
+        language_id=language.id,
+        rental_duration=3,
+        rental_rate=4.99,
+        length=136,
+        replacement_cost=19.99,
+    )
+    db_session.add(film)
+    db_session.commit()
+    db_session.refresh(film)
+
+    yield film
+
+    existing = db_session.get(Film, film.id)
     if existing:
         db_session.delete(existing)
         db_session.commit()
