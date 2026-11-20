@@ -5,11 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from app.address.service import AddressService
 from app.core.dependencies import Pagination
 from app.core.exceptions import NotFoundException
+from app.core.schemas import PaginatedResponseSchema
+from app.staff.service import StaffService
 
 from .schema import (
     CreateStoreSchema,
-    PaginatedResponseSchema,
     PatchStoreSchema,
+    StoreFiltersSchema,
     StoreResponseSchema,
     UpdateStoreSchema,
 )
@@ -22,8 +24,9 @@ router = APIRouter(prefix="/stores", tags=["Stores"])
 def get_all_stores(
     store_service: Annotated[StoreService, Depends(StoreService)],
     pagination: Annotated[Pagination, Depends(Pagination)],
+    filters: Annotated[StoreFiltersSchema, Depends(StoreFiltersSchema)],
 ):
-    return store_service.get_all(pagination)
+    return store_service.get_all(pagination, filters)
 
 
 @router.post(
@@ -32,13 +35,17 @@ def get_all_stores(
 def create_store(
     store_service: Annotated[StoreService, Depends(StoreService)],
     address_service: Annotated[AddressService, Depends(AddressService)],
+    staff_service: Annotated[StaffService, Depends(StaffService)],
     data: CreateStoreSchema,
 ):
     address = address_service.get_by_id(data.address_id)
     if not address:
         raise NotFoundException("address not found")
 
-    # TODO: check staff.id from staff service
+    if data.manager_staff_id is not None:
+        staff = staff_service.get_by_id(data.manager_staff_id)
+        if not staff:
+            raise NotFoundException("staff not found")
 
     return store_service.create(data)
 
@@ -49,10 +56,8 @@ def get_store_by_id(
     store_id: Annotated[int, Path(gt=0)],
 ):
     store = store_service.get_by_id(store_id)
-
     if not store:
         raise NotFoundException()
-
     return store
 
 
@@ -60,11 +65,11 @@ def get_store_by_id(
 def patch_store_by_id(
     store_service: Annotated[StoreService, Depends(StoreService)],
     address_service: Annotated[AddressService, Depends(AddressService)],
+    staff_service: Annotated[StaffService, Depends(StaffService)],
     store_id: Annotated[int, Path(gt=0)],
     data: PatchStoreSchema,
 ):
     store = store_service.get_by_id(store_id)
-
     if not store:
         raise NotFoundException()
 
@@ -73,7 +78,10 @@ def patch_store_by_id(
         if not address:
             raise NotFoundException("address not found")
 
-    # TODO: check staff.id from staff service
+    if data.manager_staff_id is not None:
+        staff = staff_service.get_by_id(data.manager_staff_id)
+        if not staff:
+            raise NotFoundException("staff not found")
 
     return store_service.patch(store_id, data)
 
@@ -82,12 +90,11 @@ def patch_store_by_id(
 def update_store_by_id(
     store_service: Annotated[StoreService, Depends(StoreService)],
     address_service: Annotated[AddressService, Depends(AddressService)],
+    staff_service: Annotated[StaffService, Depends(StaffService)],
     store_id: Annotated[int, Path(gt=0)],
     data: UpdateStoreSchema,
 ):
-
     store = store_service.get_by_id(store_id)
-
     if not store:
         raise NotFoundException()
 
@@ -95,13 +102,18 @@ def update_store_by_id(
     if not address:
         raise NotFoundException("address not found")
 
-    if store_service.is_address_in_store(data.address_id):
+    if store.address_id != data.address_id and store_service.is_address_in_store(
+        data.address_id
+    ):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="this address is already assigned to this store",
+            detail="this address is already assigned to another store",
         )
 
-    # TODO: check staff.id from staff service
+    if data.manager_staff_id is not None:
+        staff = staff_service.get_by_id(data.manager_staff_id)
+        if not staff:
+            raise NotFoundException("staff not found")
 
     return store_service.update(store_id, data)
 
