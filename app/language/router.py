@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Path, status
 
 from app.core.dependencies import Pagination
 from app.core.exceptions import NotFoundException
-from app.core.schemas import PaginatedResponseSchema,
+from app.core.schemas import PaginatedResponseSchema
 
 from .schema import (
     CreateLanguageSchema,
