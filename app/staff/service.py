@@ -1,70 +1,74 @@
-from math import ceil
 from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import or_
 
 from app.core.dependencies import Pagination, get_db
+from app.core.schemas import PaginatedResponseSchema
 
 from .model import Staff
 from .schema import (
     CreateStaffSchema,
     PatchStaffSchema,
+    StaffFiltersSchema,
     UpdatedStaffSchema,
 )
 
 
 class StaffService:
-    db: Session
-    model: type[Staff] = Staff
-
     def __init__(self, db: Annotated[Session, Depends(get_db)]) -> None:
-        self.db = db
+        self.db: Session = db
+        self.model = Staff
 
-    def get_all(self, pagination: Pagination):
-        page, size, q = (pagination.page, pagination.size, pagination.q)
-        model = self.model
-        query = self.db.query(model)
+    def get_all(
+        self, pagination: Pagination, filters: StaffFiltersSchema
+    ) -> PaginatedResponseSchema[Staff]:
+        query = self.db.query(self.model)
 
-        if not q is None:
-            query = query.filter(
-                or_(
-                    model.first_name.ilike(f"%{q}%"),
-                    model.last_name.ilike(f"%{q}%"),
-                    model.username.ilike(f"%{q}%"),
-                    model.email.ilike(f"%{q}%"),
-                )
-            )
+        if filters.first_name:
+            query = query.filter(self.model.first_name.ilike(f"%{filters.first_name}%"))
+
+        if filters.last_name:
+            query = query.filter(self.model.last_name.ilike(f"%{filters.last_name}%"))
+
+        if filters.email:
+            query = query.filter(self.model.email.ilike(f"%{filters.email}%"))
+
+        if filters.username:
+            query = query.filter(self.model.username.ilike(f"%{filters.username}%"))
+
+        if filters.store_id:
+            query = query.filter_by(store_id=filters.store_id)
+
+        if filters.address_id:
+            query = query.filter_by(address_id=filters.address_id)
+
+        if filters.active is not None:
+            query = query.filter_by(active=filters.active)
 
         total = query.count()
-        offset = (page - 1) * size
-        items = query.offset(offset).limit(size).all()
+        offset = (pagination.page - 1) * pagination.size
+        items = query.offset(offset).limit(pagination.size).all()
 
-        return {
-            "items": items,
-            "total": total,
-            "page": page,
-            "size": size,
-            "total_pages": ceil(total / size) if size > 0 else 0,
-        }
+        return PaginatedResponseSchema(
+            items=items,
+            total=total,
+            page=pagination.page,
+            size=pagination.size,
+        )
 
-    def get_by_id(self, staff_id: int):
+    def get_by_id(self, staff_id: int) -> Staff | None:
         return self.db.query(self.model).filter_by(id=staff_id).one_or_none()
 
-    def create(self, data: CreateStaffSchema):
-        db, model = (self.db, self.model)
-
-        new_staff = model(**data.model_dump())
-        db.add(new_staff)
-        db.commit()
-        db.refresh(new_staff)
-
+    def create(self, data: CreateStaffSchema) -> Staff:
+        new_staff = self.model(**data.model_dump())
+        self.db.add(new_staff)
+        self.db.commit()
+        self.db.refresh(new_staff)
         return new_staff
 
-    def update(self, staff_id: int, data: UpdatedStaffSchema):
-        db, model = (self.db, self.model)
-        staff = db.query(model).filter_by(id=staff_id).one_or_none()
+    def update(self, staff_id: int, data: UpdatedStaffSchema) -> Staff | None:
+        staff = self.db.query(self.model).filter_by(id=staff_id).one_or_none()
         if not staff:
             return None
 
@@ -72,13 +76,12 @@ class StaffService:
         for key, value in update_data.items():
             setattr(staff, key, value)
 
-        db.commit()
-        db.refresh(staff)
+        self.db.commit()
+        self.db.refresh(staff)
         return staff
 
-    def patch(self, staff_id: int, data: PatchStaffSchema):
-        db, model = (self.db, self.model)
-        staff = db.query(model).filter_by(id=staff_id).one_or_none()
+    def patch(self, staff_id: int, data: PatchStaffSchema) -> Staff | None:
+        staff = self.db.query(self.model).filter_by(id=staff_id).one_or_none()
         if not staff:
             return None
 
@@ -86,16 +89,15 @@ class StaffService:
         for key, value in update_data.items():
             setattr(staff, key, value)
 
-        db.commit()
-        db.refresh(staff)
+        self.db.commit()
+        self.db.refresh(staff)
         return staff
 
-    def delete(self, staff_id: int):
-        db, model = (self.db, self.model)
-        staff = db.query(model).filter_by(id=staff_id).one_or_none()
-        if staff:
-            db.delete(staff)
-            db.commit()
-            return True
+    def delete(self, staff_id: int) -> Staff | None:
+        staff = self.db.query(self.model).filter_by(id=staff_id).one_or_none()
+        if not staff:
+            return None
 
-        return False
+        self.db.delete(staff)
+        self.db.commit()
+        return staff

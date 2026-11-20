@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, Path, status
 from app.address.service import AddressService
 from app.core.dependencies import Pagination
 from app.core.exceptions import NotFoundException
+from app.core.schemas import PaginatedResponseSchema
 from app.store.service import StoreService
 
 from .schema import (
     CreateStaffSchema,
-    PaginatedResponseSchema,
     PatchStaffSchema,
+    StaffFiltersSchema,
     StaffResponseSchema,
     UpdatedStaffSchema,
 )
@@ -23,8 +24,9 @@ router = APIRouter(prefix="/staffs", tags=["Staffs"])
 def get_all_staffs(
     staff_service: Annotated[StaffService, Depends(StaffService)],
     pagination: Annotated[Pagination, Depends(Pagination)],
+    filters: Annotated[StaffFiltersSchema, Depends(StaffFiltersSchema)],
 ):
-    return staff_service.get_all(pagination)
+    return staff_service.get_all(pagination, filters)
 
 
 @router.post(
@@ -72,12 +74,12 @@ def patch_staff_by_id(
     if not staff:
         raise NotFoundException()
 
-    if data.address_id is not None:
+    if data.address_id:
         address = address_service.get_by_id(data.address_id)
         if not address:
             raise NotFoundException("address not found")
 
-    if data.store_id is not None:
+    if data.store_id:
         store = store_service.get_by_id(data.store_id)
         if not store:
             raise NotFoundException("store not found")
