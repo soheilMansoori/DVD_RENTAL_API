@@ -23,3 +23,6 @@ class Store(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now, onupdate=datetime.now
     )
+
+    def __repr__(self) -> str:
+        return f"Store(id={self.id}, manager_staff_id={self.manager_staff_id}, address_id={self.address_id})"
