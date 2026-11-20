@@ -1,55 +1,61 @@
-from math import ceil
 from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import Pagination, get_db
+from app.core.schemas import PaginatedResponseSchema
 
 from .model import Store
-from .schema import CreateStoreSchema, PatchStoreSchema, UpdateStoreSchema
+from .schema import (
+    CreateStoreSchema,
+    PatchStoreSchema,
+    StoreFiltersSchema,
+    UpdateStoreSchema,
+)
 
 
 class StoreService:
-    db: Session
-    model: type[Store] = Store
-
     def __init__(self, db: Annotated[Session, Depends(get_db)]) -> None:
-        self.db = db
+        self.db: Session = db
+        self.model = Store
 
-    def get_all(self, pagination: Pagination):
-        page, size = (pagination.page, pagination.size)
-        model = self.model
-        query = self.db.query(model)
+    def get_all(
+        self, pagination: Pagination, filters: StoreFiltersSchema
+    ) -> PaginatedResponseSchema[Store]:
+        query = self.db.query(self.model)
+
+        if filters.manager_staff_id:
+            query = query.filter(
+                self.model.manager_staff_id == filters.manager_staff_id
+            )
+
+        if filters.address_id:
+            query = query.filter(self.model.address_id == filters.address_id)
 
         total = query.count()
-        offset = (page - 1) * size
-        items = query.offset(offset).limit(size).all()
+        offset = (pagination.page - 1) * pagination.size
+        items = query.offset(offset).limit(pagination.size).all()
 
-        return {
-            "items": items,
-            "total": total,
-            "page": page,
-            "size": size,
-            "total_pages": ceil(total / size) if size > 0 else 0,
-        }
+        return PaginatedResponseSchema(
+            items=items,
+            total=total,
+            page=pagination.page,
+            size=pagination.size,
+        )
 
-    def get_by_id(self, store_id: int):
+    def get_by_id(self, store_id: int) -> Store | None:
         return self.db.query(self.model).filter_by(id=store_id).one_or_none()
 
-    def create(self, data: CreateStoreSchema):
-        db, model = (self.db, self.model)
-
-        new_store = model(**data.model_dump())
-        db.add(new_store)
-        db.commit()
-        db.refresh(new_store)
-
+    def create(self, data: CreateStoreSchema) -> Store:
+        new_store = self.model(**data.model_dump())
+        self.db.add(new_store)
+        self.db.commit()
+        self.db.refresh(new_store)
         return new_store
 
-    def update(self, store_id: int, data: UpdateStoreSchema):
-        db, model = (self.db, self.model)
-        store = db.query(model).filter_by(id=store_id).one_or_none()
+    def update(self, store_id: int, data: UpdateStoreSchema) -> Store | None:
+        store = self.db.query(self.model).filter_by(id=store_id).one_or_none()
         if not store:
             return None
 
@@ -57,13 +63,12 @@ class StoreService:
         for key, value in update_data.items():
             setattr(store, key, value)
 
-        db.commit()
-        db.refresh(store)
+        self.db.commit()
+        self.db.refresh(store)
         return store
 
-    def patch(self, store_id: int, data: PatchStoreSchema):
-        db, model = (self.db, self.model)
-        store = db.query(model).filter_by(id=store_id).one_or_none()
+    def patch(self, store_id: int, data: PatchStoreSchema) -> Store | None:
+        store = self.db.query(self.model).filter_by(id=store_id).one_or_none()
         if not store:
             return None
 
@@ -71,21 +76,23 @@ class StoreService:
         for key, value in update_data.items():
             setattr(store, key, value)
 
-        db.commit()
-        db.refresh(store)
+        self.db.commit()
+        self.db.refresh(store)
         return store
 
-    def delete(self, store_id: int):
-        db, model = (self.db, self.model)
-        store = db.query(model).filter_by(id=store_id).one_or_none()
-        if store:
-            db.delete(store)
-            db.commit()
-            return True
+    def delete(self, store_id: int) -> Store | None:
+        store = self.db.query(self.model).filter_by(id=store_id).one_or_none()
+        if not store:
+            return None
 
-        return False
+        self.db.delete(store)
+        self.db.commit()
+        return store
 
-    def is_address_in_store(self, address_id: int):
-        db, model = self.db, self.model
-        exists = db.query(model).filter(model.address_id == address_id).one_or_none()
+    def is_address_in_store(self, address_id: int) -> bool:
+        exists = (
+            self.db.query(self.model)
+            .filter(self.model.address_id == address_id)
+            .one_or_none()
+        )
         return exists is not None
