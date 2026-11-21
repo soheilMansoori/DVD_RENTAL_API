@@ -14,6 +14,7 @@ from app.customer.model import Customer
 from app.film.model import Film
 from app.film_actor.model import FilmActor
 from app.film_category.model import FilmCategory
+from app.inventory.model import Inventory
 from app.language.model import Language
 from app.main import app
 from app.staff.model import Staff
@@ -278,6 +279,21 @@ def film_category(db_session, film, category):
     yield relation
 
     existing = db_session.get(FilmCategory, (relation.film_id, relation.category_id))
+    if existing:
+        db_session.delete(existing)
+        db_session.commit()
+
+
+@pytest.fixture
+def inventory(db_session, film, store):
+    """create one inventory and return it"""
+    inventory = Inventory(film_id=film.id, store_id=store.id)
+    db_session.add(inventory)
+    db_session.commit()
+    db_session.refresh(inventory)
+
+    yield inventory
+    existing = db_session.get(Inventory, inventory.id)
     if existing:
         db_session.delete(existing)
         db_session.commit()
