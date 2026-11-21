@@ -19,3 +19,8 @@ class Inventory(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now, onupdate=datetime.now
     )
+
+    def __repr__(self) -> str:
+        return (
+            f"Inventory(id={self.id}, film_id={self.film_id}, store_id={self.store_id})"
+        )
