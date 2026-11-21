@@ -18,6 +18,7 @@ from app.film_actor.router import router as film_actor_router
 from app.film_category.router import router as film_category_router
 from app.inventory.router import router as inventory_router
 from app.language.router import router as language_router
+from app.payment.router import router as payment_router
 from app.rental.router import router as rental_router
 from app.staff.router import router as staff_router
 from app.store.router import router as store_router
@@ -58,3 +59,4 @@ app.include_router(staff_router)
 app.include_router(customer_router)
 app.include_router(inventory_router)
 app.include_router(rental_router)
+app.include_router(payment_router)
