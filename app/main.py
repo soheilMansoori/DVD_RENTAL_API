@@ -1,6 +1,7 @@
+from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi_offline import FastAPIOffline
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -10,6 +11,7 @@ from app.actor.router import router as actor_router
 from app.address.router import router as address_router
 from app.category.router import router as category_router
 from app.city.router import router as city_router
+from app.core.database import engine
 from app.core.dependencies import get_db
 from app.country.router import router as country_router
 from app.customer.router import router as customer_router
@@ -23,10 +25,30 @@ from app.rental.router import router as rental_router
 from app.staff.router import router as staff_router
 from app.store.router import router as store_router
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+            print("connect to database successfully")
+
+    except Exception as error:
+        raise RuntimeError(
+            "cannot start application: database is unavailable"
+        ) from error
+
+    yield
+
+    engine.dispose()
+    print("database connections closed")
+
+
 app = FastAPIOffline(
     title="DVD_RENTAL_API",
     description="dvd_rental _api created by fastapi and postgres",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 
