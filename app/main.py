@@ -23,7 +23,11 @@ from app.rental.router import router as rental_router
 from app.staff.router import router as staff_router
 from app.store.router import router as store_router
 
-app = FastAPIOffline()
+app = FastAPIOffline(
+    title="DVD_RENTAL_API",
+    description="dvd_rental _api created by fastapi and postgres",
+    version="1.0.0",
+)
 
 
 @app.get("/", tags=["System"])
