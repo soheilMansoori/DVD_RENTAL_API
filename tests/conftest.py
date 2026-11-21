@@ -17,6 +17,7 @@ from app.film_category.model import FilmCategory
 from app.inventory.model import Inventory
 from app.language.model import Language
 from app.main import app
+from app.payment.model import Payment
 from app.rental.model import Rental
 from app.staff.model import Staff
 from app.store.model import Store
@@ -315,6 +316,27 @@ def rental(db_session, inventory, customer, staff):
     yield rental
 
     existing = db_session.get(Rental, rental.id)
+    if existing:
+        db_session.delete(existing)
+        db_session.commit()
+
+
+@pytest.fixture
+def payment(db_session, customer, staff, rental):
+    """create one payment and return it"""
+    payment = Payment(
+        customer_id=customer.id,
+        staff_id=staff.id,
+        rental_id=rental.id,
+        amount="4.99",
+    )
+    db_session.add(payment)
+    db_session.commit()
+    db_session.refresh(payment)
+
+    yield payment
+
+    existing = db_session.get(Payment, payment.id)
     if existing:
         db_session.delete(existing)
         db_session.commit()
