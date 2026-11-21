@@ -17,6 +17,7 @@ from app.film_category.model import FilmCategory
 from app.inventory.model import Inventory
 from app.language.model import Language
 from app.main import app
+from app.rental.model import Rental
 from app.staff.model import Staff
 from app.store.model import Store
 
@@ -293,7 +294,27 @@ def inventory(db_session, film, store):
     db_session.refresh(inventory)
 
     yield inventory
+
     existing = db_session.get(Inventory, inventory.id)
+    if existing:
+        db_session.delete(existing)
+        db_session.commit()
+
+
+@pytest.fixture
+def rental(db_session, inventory, customer, staff):
+    """create one rental and return it"""
+    rental = Rental(
+        inventory_id=inventory.id, customer_id=customer.id, staff_id=staff.id
+    )
+
+    db_session.add(rental)
+    db_session.commit()
+    db_session.refresh(rental)
+
+    yield rental
+
+    existing = db_session.get(Rental, rental.id)
     if existing:
         db_session.delete(existing)
         db_session.commit()
