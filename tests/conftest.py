@@ -65,12 +65,7 @@ def actor(db_session):
     db_session.commit()
     db_session.refresh(actor)
 
-    yield actor
-
-    existing = db_session.get(Actor, actor.id)
-    if existing:
-        db_session.delete(existing)
-        db_session.commit()
+    return actor
 
 
 @pytest.fixture
@@ -81,12 +76,7 @@ def country(db_session):
     db_session.commit()
     db_session.refresh(country)
 
-    yield country
-
-    existing = db_session.get(Country, country.id)
-    if existing:
-        db_session.delete(existing)
-        db_session.commit()
+    return country
 
 
 @pytest.fixture
@@ -97,12 +87,7 @@ def city(db_session, country):
     db_session.commit()
     db_session.refresh(city)
 
-    yield city
-
-    existing = db_session.get(City, city.id)
-    if existing:
-        db_session.delete(existing)
-        db_session.commit()
+    return city
 
 
 @pytest.fixture
@@ -120,12 +105,7 @@ def address(db_session, city):
     db_session.commit()
     db_session.refresh(address)
 
-    yield address
-
-    existing = db_session.get(City, address.id)
-    if existing:
-        db_session.delete(existing)
-        db_session.commit()
+    return address
 
 
 @pytest.fixture
@@ -136,12 +116,7 @@ def category(db_session):
     db_session.commit()
     db_session.refresh(category)
 
-    yield category
-
-    existing = db_session.get(City, category.id)
-    if existing:
-        db_session.delete(existing)
-        db_session.commit()
+    return category
 
 
 @pytest.fixture
@@ -169,7 +144,7 @@ def store_and_staff(db_session, address):
     db_session.commit()
     db_session.refresh(store)
 
-    yield {"store": store, "staff": staff}
+    return {"store": store, "staff": staff}
 
     db_session.delete(staff)
     db_session.delete(store)
@@ -203,12 +178,7 @@ def customer(db_session, store, address):
     db_session.commit()
     db_session.refresh(customer)
 
-    yield customer
-
-    existing = db_session.get(Customer, customer.id)
-    if existing:
-        db_session.delete(existing)
-        db_session.commit()
+    return customer
 
 
 @pytest.fixture
@@ -219,12 +189,7 @@ def language(db_session):
     db_session.commit()
     db_session.refresh(language)
 
-    yield language
-
-    existing = db_session.get(Language, language.id)
-    if existing:
-        db_session.delete(existing)
-        db_session.commit()
+    return language
 
 
 @pytest.fixture
@@ -244,12 +209,7 @@ def film(db_session, language):
     db_session.commit()
     db_session.refresh(film)
 
-    yield film
-
-    existing = db_session.get(Film, film.id)
-    if existing:
-        db_session.delete(existing)
-        db_session.commit()
+    return film
 
 
 @pytest.fixture
@@ -259,12 +219,7 @@ def film_actor(db_session, film, actor):
     db_session.commit()
     db_session.refresh(relation)
 
-    yield relation
-
-    existing = db_session.get(FilmActor, (relation.actor_id, relation.film_id))
-    if existing:
-        db_session.delete(existing)
-        db_session.commit()
+    return relation
 
 
 @pytest.fixture
@@ -278,12 +233,7 @@ def film_category(db_session, film, category):
     db_session.commit()
     db_session.refresh(relation)
 
-    yield relation
-
-    existing = db_session.get(FilmCategory, (relation.film_id, relation.category_id))
-    if existing:
-        db_session.delete(existing)
-        db_session.commit()
+    return relation
 
 
 @pytest.fixture
@@ -294,12 +244,7 @@ def inventory(db_session, film, store):
     db_session.commit()
     db_session.refresh(inventory)
 
-    yield inventory
-
-    existing = db_session.get(Inventory, inventory.id)
-    if existing:
-        db_session.delete(existing)
-        db_session.commit()
+    return inventory
 
 
 @pytest.fixture
@@ -313,12 +258,7 @@ def rental(db_session, inventory, customer, staff):
     db_session.commit()
     db_session.refresh(rental)
 
-    yield rental
-
-    existing = db_session.get(Rental, rental.id)
-    if existing:
-        db_session.delete(existing)
-        db_session.commit()
+    return rental
 
 
 @pytest.fixture
@@ -334,9 +274,4 @@ def payment(db_session, customer, staff, rental):
     db_session.commit()
     db_session.refresh(payment)
 
-    yield payment
-
-    existing = db_session.get(Payment, payment.id)
-    if existing:
-        db_session.delete(existing)
-        db_session.commit()
+    return payment
