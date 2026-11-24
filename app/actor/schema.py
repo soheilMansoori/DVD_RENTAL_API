@@ -52,7 +52,9 @@ class PatchActorSchema(BaseModel):
     )
 
 
-class ActorResponseSchema(BaseActorSchema):
-    id: int = Field(..., gt=0, description="actor id")
+class ActorResponseSchema(BaseModel):
+    id: int
+    first_name: str
+    last_name: str
     created_at: datetime
     updated_at: datetime
