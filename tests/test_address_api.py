@@ -55,6 +55,7 @@ def test_get_address_by_id(client, address):
 
     data = response.json()
     assert data["id"] == address.id
+    assert "city" in data
     assert "address" in data
     assert "district" in data
     assert "phone" in data
