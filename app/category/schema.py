@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
-class BaseCategorySchema(BaseModel):
+class CategoryBaseSchema(BaseModel):
     name: str = Field(
         ...,
         max_length=25,
@@ -12,7 +12,7 @@ class BaseCategorySchema(BaseModel):
     )
 
 
-class CreateCategorySchema(BaseCategorySchema):
+class CreateCategorySchema(CategoryBaseSchema):
     pass
 
 
@@ -25,7 +25,8 @@ class CategoryFiltersSchema(BaseModel):
     )
 
 
-class CategoryResponseSchema(BaseCategorySchema):
+class CategoryResponseSchema(BaseModel):
     id: int
+    name: str
     created_at: datetime
     updated_at: datetime
