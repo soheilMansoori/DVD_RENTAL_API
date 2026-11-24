@@ -2,8 +2,10 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from app.country.schema import CountryResponseSchema
 
-class BaseCitySchema(BaseModel):
+
+class CityBaseSchema(BaseModel):
     city: str = Field(
         ...,
         min_length=2,
@@ -19,7 +21,7 @@ class BaseCitySchema(BaseModel):
     )
 
 
-class CreateCitySchema(BaseCitySchema):
+class CreateCitySchema(CityBaseSchema):
     pass
 
 
@@ -28,7 +30,17 @@ class CityFiltersSchema(BaseModel):
     country_id: int | None = Field(None, gt=0)
 
 
-class CityResponseSchema(BaseCitySchema):
+class CityBaseResponseSchema(BaseModel):
     id: int
+    city: str
+    country_id: int
     created_at: datetime
     updated_at: datetime
+
+
+class CityResponseSchema(CityBaseResponseSchema):
+    pass
+
+
+class CityDetailResponseSchema(CityResponseSchema):
+    country: CountryResponseSchema | None

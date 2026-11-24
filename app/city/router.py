@@ -7,7 +7,12 @@ from app.core.exceptions import NotFoundException
 from app.core.schemas import PaginatedResponseSchema
 from app.country.service import CountryService
 
-from .schema import CityFiltersSchema, CityResponseSchema, CreateCitySchema
+from .schema import (
+    CityDetailResponseSchema,
+    CityFiltersSchema,
+    CityResponseSchema,
+    CreateCitySchema,
+)
 from .service import CityService
 
 router = APIRouter(prefix="/cities", tags=["Cities"])
@@ -37,7 +42,7 @@ def create_city(
     return city_service.create(data)
 
 
-@router.get("/{city_id}", response_model=CityResponseSchema)
+@router.get("/{city_id}", response_model=CityDetailResponseSchema)
 def get_city_by_id(
     city_service: Annotated[CityService, Depends(CityService)],
     city_id: Annotated[int, Path(gt=0)],

@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.dependencies import Pagination, get_db
 from app.core.schemas import PaginatedResponseSchema
@@ -39,7 +39,12 @@ class CityService:
         )
 
     def get_by_id(self, city_id: int) -> City | None:
-        return self.db.query(self.model).filter_by(id=city_id).one_or_none()
+        return (
+            self.db.query(self.model)
+            .filter_by(id=city_id)
+            .options(joinedload(self.model.country))
+            .one_or_none()
+        )
 
     def create(self, data: CreateCitySchema) -> City:
         new_city = self.model(**data.model_dump())
