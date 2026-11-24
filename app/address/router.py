@@ -8,7 +8,8 @@ from app.core.exceptions import NotFoundException
 from app.core.schemas import PaginatedResponseSchema
 
 from .schema import (
-    AddressFilters,
+    AddressDetailResponseSchema,
+    AddressFiltersSchema,
     AddressResponseSchema,
     CreateAddressSchema,
     PatchAddressSchema,
@@ -23,7 +24,7 @@ router = APIRouter(prefix="/addresses", tags=["Addresses"])
 def get_all_addresses(
     address_service: Annotated[AddressService, Depends(AddressService)],
     pagination: Annotated[Pagination, Depends(Pagination)],
-    filters: Annotated[AddressFilters, Depends(AddressFilters)],
+    filters: Annotated[AddressFiltersSchema, Depends(AddressFiltersSchema)],
 ):
     return address_service.get_all(pagination, filters)
 
@@ -43,7 +44,7 @@ def create_address(
     return address_service.create(data)
 
 
-@router.get("/{address_id}", response_model=AddressResponseSchema)
+@router.get("/{address_id}", response_model=AddressDetailResponseSchema)
 def get_address_by_id(
     address_service: Annotated[AddressService, Depends(AddressService)],
     address_id: int = Path(gt=0),

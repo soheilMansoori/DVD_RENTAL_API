@@ -1,14 +1,14 @@
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.dependencies import Pagination, get_db
 from app.core.schemas import PaginatedResponseSchema
 
 from .model import Address
 from .schema import (
-    AddressFilters,
+    AddressFiltersSchema,
     CreateAddressSchema,
     PatchAddressSchema,
     UpdateAddressSchema,
@@ -21,9 +21,9 @@ class AddressService:
         self.model = Address
 
     def get_all(
-        self, pagination: Pagination, filters: AddressFilters
+        self, pagination: Pagination, filters: AddressFiltersSchema
     ) -> PaginatedResponseSchema[Address]:
-        query = self.db.query(self.model)
+        query = self.db.query(self.model).options(joinedload(self.model.city))
 
         if filters.address:
             query = query.filter(self.model.address.ilike(f"%{filters.address}%"))
@@ -52,7 +52,12 @@ class AddressService:
         )
 
     def get_by_id(self, address_id: int) -> Address | None:
-        return self.db.query(self.model).filter_by(id=address_id).one_or_none()
+        return (
+            self.db.query(self.model)
+            .filter_by(id=address_id)
+            .options(joinedload(self.model.city))
+            .one_or_none()
+        )
 
     def create(self, data: CreateAddressSchema) -> Address:
         new_address = self.model(**data.model_dump())
