@@ -7,7 +7,12 @@ from app.core.dependencies import Pagination, get_db
 from app.core.schemas import PaginatedResponseSchema
 
 from .model import Actor
-from .schema import ActorFilters, CreateActorSchema, PatchActorSchema, UpdateActorSchema
+from .schema import (
+    ActorFiltersSchema,
+    CreateActorSchema,
+    PatchActorSchema,
+    UpdateActorSchema,
+)
 
 
 class ActorService:
@@ -16,7 +21,7 @@ class ActorService:
         self.model = Actor
 
     def get_all(
-        self, pagination: Pagination, filters: ActorFilters
+        self, pagination: Pagination, filters: ActorFiltersSchema
     ) -> PaginatedResponseSchema[Actor]:
         query = self.db.query(self.model)
 

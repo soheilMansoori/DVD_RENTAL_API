@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
-class BaseActorSchema(BaseModel):
+class ActorBaseSchema(BaseModel):
     first_name: str = Field(
         ...,
         min_length=4,
@@ -21,16 +21,16 @@ class BaseActorSchema(BaseModel):
     )
 
 
-class ActorFilters(BaseModel):
+class ActorFiltersSchema(BaseModel):
     first_name: str | None = Field(None, min_length=4)
     last_name: str | None = Field(None, min_length=4)
 
 
-class CreateActorSchema(BaseActorSchema):
+class CreateActorSchema(ActorBaseSchema):
     pass
 
 
-class UpdateActorSchema(BaseActorSchema):
+class UpdateActorSchema(ActorBaseSchema):
     pass
 
 

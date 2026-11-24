@@ -7,7 +7,7 @@ from app.core.exceptions import NotFoundException
 from app.core.schemas import PaginatedResponseSchema
 
 from .schema import (
-    ActorFilters,
+    ActorFiltersSchema,
     ActorResponseSchema,
     CreateActorSchema,
     PatchActorSchema,
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/actors", tags=["Actors"])
 def get_all_actors(
     actor_service: Annotated[ActorService, Depends(ActorService)],
     pagination: Annotated[Pagination, Depends(Pagination)],
-    filters: Annotated[ActorFilters, Depends(ActorFilters)],
+    filters: Annotated[ActorFiltersSchema, Depends(ActorFiltersSchema)],
 ):
     return actor_service.get_all(pagination, filters)
 
