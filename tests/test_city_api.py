@@ -50,6 +50,7 @@ def test_get_city_by_id(client, city):
     assert data["id"] == city.id
     assert "city" in data
     assert "country_id" in data
+    assert "country" in data
     assert "created_at" in data
     assert "updated_at" in data
 
